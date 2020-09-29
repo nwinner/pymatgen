@@ -323,20 +323,20 @@ class Section(MSONable):
         ).from_dict(copy.deepcopy(self.as_dict()))
 
     def __getitem__(self, d):
-        for k in self.keywords:
-            if k.upper() == d.upper():
-                return self.keywords[k]
         for k in self.subsections:
-            if k.upper() == d.upper():
+            if str(k).upper() == str(d).upper():
                 return self.subsections[k]
+        for k in self.keywords:
+            if str(k).upper() == str(d).upper():
+                return self.keywords[k]
         raise KeyError
 
     def __add__(self, other):
         if isinstance(other, (Keyword, KeywordList)):
-            if other.name in self:
+            if other.name in self.keywords:
                 self[other.name] += other
             else:
-                self[other] = other
+                self[other.name] = other
         elif isinstance(other, Section):
             self.insert(other)
         else:
@@ -352,12 +352,12 @@ class Section(MSONable):
              d: the key to retrieve, if present
              default: what to return if d is not found
         """
-        for k in self.keywords:
-            if k.upper() == d.upper():
-                return self.keywords[k]
         for k in self.subsections:
-            if k.upper() == d.upper():
+            if str(k).upper() == str(d).upper():
                 return self.subsections[k]
+        for k in self.keywords:
+            if str(k).upper() == str(d).upper():
+                return self.keywords[k]
         return default
 
     def __setitem__(self, key, value):
@@ -741,19 +741,21 @@ class ForceEval(Section):
     Controls the calculation of energy and forces in Cp2k
     """
 
-    def __init__(self, subsections: dict = None, **kwargs):
+    def __init__(self, method='QS', stress_tensor='ANALYTICAL', subsections: dict = None, **kwargs):
         """
         Initialize the ForceEval section
         """
 
+        self.method = 'QS'
+        self.stress_tensor = 'ANALYTICAL'
         self.subsections = subsections if subsections else {}
         self.kwargs = kwargs
 
         description = "parameters needed to calculate energy and forces and describe the system you want to analyze."
 
         keywords = {
-            "METHOD": Keyword("METHOD", kwargs.get("METHOD", "QS")),
-            "STRESS_TENSOR": Keyword("STRESS_TENSOR", kwargs.get("STRESS_TENSOR", "ANALYTICAL")),
+            "METHOD": Keyword("METHOD", method),
+            "STRESS_TENSOR": Keyword("STRESS_TENSOR", stress_tensor),
         }
 
         super(ForceEval, self).__init__(
@@ -1850,7 +1852,7 @@ class Kpoints(Section):
         kpoints = k['kpoints']
         weights = k['kpts_weights']
         scheme = k['generation_style']
-        if scheme.lower() == 'Monkhorst':
+        if scheme.lower() == 'monkhorst':
             scheme = 'MONKHORST-PACK'
         units = k['coord_type']
         if k['coord_type']:

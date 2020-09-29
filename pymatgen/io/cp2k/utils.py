@@ -178,7 +178,7 @@ def get_basis_and_potential(species, d, cardinality='DZVP', functional='PBE'):
     return basis_and_potential
 
 
-def get_aux_basis(basis_type, default_basis_type='cFIT'):
+def get_aux_basis(basis_type, default_basis_type='cpFIT'):
     """
     Get auxiliary basis info for a list of species.
 

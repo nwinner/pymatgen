@@ -124,13 +124,20 @@ class Cp2kInputSet(Cp2kInput):
         for s in self.structure.species:
             assert (s in [e for e in Element])
 
-        self.insert(ForceEval())  # always present in cp2k
+        self.insert(
+            ForceEval(
+                method=kwargs.get('METHOD', 'QS'),
+                stress_tensor=kwargs.get('STRESS_TENSOR', 'ANALYTICAL')
+            )
+        )  # always present in cp2k
         self.basis_set_file_names = None  # need for dft
         self.potential_file_name = None  # need for dft
         self.create_subsys(self.structure)  # assemble structure with atom types and pseudopotentials assigned
 
         if self.kwargs.get('print_forces', True):
             self.print_forces()
+        if self.kwargs.get('print_stress', False):
+            self.print_stress()
         if self.kwargs.get('print_motion', True):
             self.print_motion()
 
@@ -204,6 +211,11 @@ class Cp2kInputSet(Cp2kInput):
         """
         self["FORCE_EVAL"].insert(Section("PRINT", subsections={}))
         self["FORCE_EVAL"]["PRINT"].insert(Section("FORCES", subsections={}))
+
+    def print_stress(self):
+        """
+        print out the stress tensor during calculation. Note: expensive for Hybrid
+        """
         self["FORCE_EVAL"]["PRINT"].insert(
             Section("STRESS_TENSOR", subsections={})
         )
@@ -719,9 +731,9 @@ class DftSet(Cp2kInputSet):
         }
         self['FORCE_EVAL']['DFT'].insert(Section('POISSON', subsections={}, keywords=kwds))
         if not self.check('FORCE_EVAL/SUBSYS/CELL'):
-            x = max([s.coord[0] for s in self.structure.sites])
-            y = max([s.coord[1] for s in self.structure.sites])
-            z = max([s.coord[2] for s in self.structure.sites])
+            x = max([s.coords[0] for s in self.structure.sites])
+            y = max([s.coords[1] for s in self.structure.sites])
+            z = max([s.coords[2] for s in self.structure.sites])
             self['FORCE_EVAL']['SUBSYS'].insert(
                 Cell(
                     lattice=Lattice([[x, 0, 0],
@@ -945,6 +957,8 @@ class HybridStaticSet(StaticSet):
         self.screen_p_forces = screen_p_forces
         self.kwargs = kwargs
 
+        self.kwargs['STRESS_TENSOR'] = self.kwargs.get('STRESS_TENSOR', 'NONE')
+
         self.activate_hybrid(
             hybrid_functional=hybrid_functional,
             hf_fraction=hf_fraction,
@@ -1021,6 +1035,8 @@ class HybridRelaxSet(RelaxSet):
         self.screen_p_forces = screen_p_forces
         self.kwargs = kwargs
 
+        self.kwargs['STRESS_TENSOR'] = self.kwargs.get('STRESS_TENSOR', 'NONE')
+
         self.activate_hybrid(
             hybrid_functional=hybrid_functional,
             hf_fraction=hf_fraction,
@@ -1096,6 +1112,8 @@ class HybridCellOptSet(CellOptSet):
         self.screen_on_initial_p = screen_on_initial_p
         self.screen_p_forces = screen_p_forces
         self.kwargs = kwargs
+
+        self.kwargs['STRESS_TENSOR'] = self.kwargs.get('STRESS_TENSOR', 'NONE')
 
         self.activate_hybrid(
             hybrid_functional=hybrid_functional,
