@@ -103,11 +103,15 @@ class BaderAnalysis:
                  chgref_filename=None,
                  parse_atomic_densities=False):
         """
-        Initializes the Bader caller.
+        Initializes the Bader caller. This should be called *either* on a cube file or on a
+        VASP CHGCAR file, with POTCAR and a reference CHGCAR being optional for the latter.
+        At a minimum, either a cube or a CHGCAR must be provided.
 
         Args:
-            chgcar_filename (str): The filename of the CHGCAR.
-
+            cube_filename (str): The filename of a cube file
+            chgcar_filename (str): The filename of a CHGCAR.
+            potcar_filename (str): Optional: The filename of the vasp POTCAR file to use
+            chgref_filename (str): Optional: The fileename of the reference CHGCAR file to use
             parse_atomic_densities (bool): Optional. turns on atomic partition of the charge density
                 charge densities are atom centered
 
