@@ -223,8 +223,6 @@ class Cp2kOutput:
             else:
                 self.filenames["wfn"] = w
 
-    # TODO Maybe I should create a parse_files function that globs to get the file names instead of putting
-    # it in each function seperate? -NW
     def parse_structures(self, trajectory_file=None, lattice_file=None):
         """
         Parses the structures from a cp2k calculation. Static calculations simply use the initial structure.
@@ -748,7 +746,7 @@ class Cp2kOutput:
             + r"\s+\-+"
         )
         row = (
-            r"(\d+)\s+(\w+\s?\w+)\s+(\d+\.\d+E\+\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)"
+            r"(\d+)\s+(\w+\s?\/?\.?\w+)\s+(\d+\.\d+E\+\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)?"
             + r"\s+(-?\d+\.\d+)\s+(-?\d+\.\d+E[\+\-]?\d+)"
         )
         footer = r"^$"
@@ -760,10 +758,10 @@ class Cp2kOutput:
             last_one_only=False,
         )
 
-        self.data["electronic_steps"] = scfs
-
         self.data["electronic_steps"] = []
+        self.data['convergence'] = []
         for i in scfs:
+            self.data['convergence'].append([[float(j[-3]) for j in i if j[-3] != 'None']])
             self.data["electronic_steps"].append([float(j[-2]) for j in i])
 
     def parse_timing(self):
