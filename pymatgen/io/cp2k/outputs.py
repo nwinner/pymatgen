@@ -27,7 +27,7 @@ from pymatgen.io.cp2k.sets import Cp2kInput
 from pymatgen.io.cp2k.utils import _postprocessor, natural_keys
 
 __author__ = "Nicholas Winner"
-__version__ = "0.2"
+__version__ = "0.3"
 __status__ = "Development"
 
 logger = logging.getLogger(__name__)
@@ -746,7 +746,7 @@ class Cp2kOutput:
             + r"\s+\-+"
         )
         row = (
-            r"(\d+)\s+(\w+\s?\/?\.?\w+)\s+(\d+\.\d+E\+\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)?"
+            r"(\d+)\s+(\S+\s?\S+)\s+(\d+\.\d+E\+\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)?"
             + r"\s+(-?\d+\.\d+)\s+(-?\d+\.\d+E[\+\-]?\d+)"
         )
         footer = r"^$"

@@ -26,6 +26,12 @@ class SetTest(PymatgenTest):
         self.assertEqual(self.out.num_warnings, [[1]])
         self.assertEqual(self.out.run_type.upper(), 'GEO_OPT')
 
+        # Can grab electronic convergence
+        self.out.parse_scf_opt()
+        self.assertEqual(len(self.out.data['convergence']), 3)
+
+    def test_pdos(self):
+        self.out.parse_dos(pdos_files=['../test_files/pdos_ALPHA', '../test_files/pdos_BETA'])
 
 if __name__ == "__main__":
     unittest.main()
