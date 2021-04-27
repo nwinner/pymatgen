@@ -97,21 +97,17 @@ class BaderAnalysis:
               " Please download the library at http://theory.cm.utexas"
               ".edu/vasp/bader/ and compile the executable.")
     def __init__(self,
-                 cube_filename=None,
                  chgcar_filename=None,
                  potcar_filename=None,
                  chgref_filename=None,
-                 parse_atomic_densities=False):
+                 parse_atomic_densities=False,
+                 cube_filename=None):
         """
-        Initializes the Bader caller. This should be called *either* on a cube file or on a
-        VASP CHGCAR file, with POTCAR and a reference CHGCAR being optional for the latter.
-        At a minimum, either a cube or a CHGCAR must be provided.
+        Initializes the Bader caller.
 
         Args:
-            cube_filename (str): The filename of a cube file
-            chgcar_filename (str): The filename of a CHGCAR.
-            potcar_filename (str): Optional: The filename of the vasp POTCAR file to use
-            chgref_filename (str): Optional: The fileename of the reference CHGCAR file to use
+            chgcar_filename (str): The filename of the CHGCAR.
+
             parse_atomic_densities (bool): Optional. turns on atomic partition of the charge density
                 charge densities are atom centered
 
@@ -152,7 +148,7 @@ class BaderAnalysis:
             self.is_vasp = False
             self.cube = Cube(fpath)
             self.structure = self.cube.structure
-            self.nelects = self.structure.site_properties.get('nelect', [])  # For cube, see if struc has nelects
+            self.nelects = None
 
         tmpfile = 'CHGCAR' if chgcar_filename else 'CUBE'
         with ScratchDir("."):
@@ -266,7 +262,7 @@ class BaderAnalysis:
         """
         return self.data[atom_index]["charge"]
 
-    def get_charge_transfer(self, atom_index):
+    def get_charge_transfer(self, atom_index, nelect=None):
         """
         Returns the charge transferred for a particular atom. Requires POTCAR
         to be supplied.
@@ -280,10 +276,10 @@ class BaderAnalysis:
             Given by final charge on atom - nelectrons in POTCAR for
             associated atom.
         """
-        if not self.nelects:
-            raise ValueError("No NELECT info! Need POTCAR for VASP, or a structure object"
-                             "with nelect as a site property.")
-        return self.data[atom_index]["charge"] - self.nelects[atom_index]
+        if not self.nelects and nelect is None:
+            raise ValueError("No NELECT info! Need POTCAR for VASP or nelect argument"
+                             "for cube file")
+        return self.data[atom_index]["charge"] - (nelect if nelect is not None else self.nelects[atom_index])
 
     def get_charge_decorated_structure(self):
         """
@@ -298,14 +294,16 @@ class BaderAnalysis:
         struc.add_site_property('charge', charges)
         return struc
 
-    def get_oxidation_state_decorated_structure(self):
+    def get_oxidation_state_decorated_structure(self, nelects=None):
         """
         Returns an oxidation state decorated structure based on bader analysis results.
 
         Note, this assumes that the Bader analysis was correctly performed on a file
         with electron densities
         """
-        charges = [-self.get_charge_transfer(i) for i in range(len(self.structure))]
+        charges = [
+            -self.get_charge_transfer(i, None if not nelects else nelects[i]) for i in range(len(self.structure))
+        ]
         struc = self.structure.copy()
         struc.add_oxidation_state_by_site(charges)
         return struc
